@@ -1,0 +1,47 @@
+{% extends 'roster/base.html' %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">{{ title }}</div>
+  <a href="{% url 'manage_agents' %}" class="btn btn-outline">← Back</a>
+</div>
+
+<div class="card" style="max-width:600px;">
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Employee ID *</label>
+        {{ form.employee_id }}
+        {% if form.employee_id.errors %}<div style="color:var(--danger);font-size:0.72rem;margin-top:4px;">{{ form.employee_id.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Full Name *</label>
+        {{ form.full_name }}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Team</label>
+        {{ form.team }}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        {{ form.email }}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Role</label>
+        {{ form.role }}
+      </div>
+      <div class="form-group" style="display:flex;align-items:flex-end;gap:10px;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.82rem;color:var(--text-secondary);">
+          {{ form.is_active }} Active
+        </label>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button type="submit" class="btn btn-primary">Save Agent</button>
+      <a href="{% url 'manage_agents' %}" class="btn btn-outline">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

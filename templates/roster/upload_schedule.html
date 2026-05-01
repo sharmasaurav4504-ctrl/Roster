@@ -1,0 +1,66 @@
+{% extends 'roster/base.html' %}
+{% block title %}Upload Schedule{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Upload Schedule</div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Upload CSV File</span>
+    </div>
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      <div class="upload-zone" onclick="document.getElementById('csv_input').click()">
+        <div class="upload-icon">📄</div>
+        <div class="upload-text">Click to select CSV file</div>
+        <div class="upload-subtext">Schedules will be created or updated</div>
+      </div>
+      <input type="file" id="csv_input" name="csv_file" accept=".csv" style="display:none" onchange="updateFileName(this)">
+      <div id="file-name" style="font-size:0.75rem;color:var(--text-muted);margin-top:8px;"></div>
+      <button type="submit" class="btn btn-primary" style="margin-top:16px;">⬆️ Upload &amp; Process</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">CSV Format Guide</span>
+    </div>
+    <div style="font-size:0.78rem;color:var(--text-secondary);line-height:1.8;margin-bottom:14px;">
+      Your CSV must have these columns (in order):
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Column</th>
+          <th>Format</th>
+          <th>Example</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>employee_id</td><td>Text</td><td class="mono">EMP001</td></tr>
+        <tr><td>date</td><td>YYYY-MM-DD</td><td class="mono">2025-01-20</td></tr>
+        <tr><td>shift_start_ist</td><td>HH:MM (24h)</td><td class="mono">09:00</td></tr>
+        <tr><td>shift_end_ist</td><td>HH:MM (24h)</td><td class="mono">18:00</td></tr>
+        <tr><td>status</td><td>scheduled/off/wfh/leave/training</td><td class="mono">scheduled</td></tr>
+        <tr><td>break_duration_minutes</td><td>Number</td><td class="mono">60</td></tr>
+        <tr><td>notes</td><td>Text (optional)</td><td class="mono">Night shift</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:16px;">
+      <a href="{% url 'download_template' %}" class="btn btn-outline btn-sm">⬇️ Download Template CSV</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateFileName(input) {
+  const el = document.getElementById('file-name');
+  el.textContent = input.files.length ? '📎 ' + input.files[0].name : '';
+}
+</script>
+{% endblock %}

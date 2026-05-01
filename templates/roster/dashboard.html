@@ -1,0 +1,63 @@
+{% extends 'roster/base.html' %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Dashboard</div>
+    <div class="page-subtitle">Overview for {{ today|date:"l, F d, Y" }}</div>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card stat-accent">
+    <div class="stat-value">{{ total_agents }}</div>
+    <div class="stat-label">Active Agents</div>
+  </div>
+  <div class="stat-card stat-success">
+    <div class="stat-value">{{ today_schedules }}</div>
+    <div class="stat-label">Schedules Today</div>
+  </div>
+  <div class="stat-card stat-warning">
+    <div class="stat-value">{{ week_schedules }}</div>
+    <div class="stat-label">This Week Total</div>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Quick Actions</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <a href="{% url 'roster' %}" class="btn btn-outline">📋 View Roster</a>
+      <a href="{% url 'edit_schedule' %}" class="btn btn-outline">✏️ Edit Schedule</a>
+      {% if user_role == 'wfm' %}
+      <a href="{% url 'upload_schedule' %}" class="btn btn-outline">⬆️ Upload CSV</a>
+      <a href="{% url 'manage_agents' %}" class="btn btn-outline">👥 Manage Agents</a>
+      {% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Access Level</span>
+    </div>
+    <div style="margin-bottom:12px;">
+      <span class="role-badge {{ user_role }}" style="font-size:0.8rem;padding:4px 12px;">{{ user_role|upper }}</span>
+    </div>
+    <div style="font-size:0.78rem;color:var(--text-secondary);line-height:1.8;">
+      {% if user_role == 'wfm' %}
+      ✅ View roster<br>
+      ✅ Edit schedules manually<br>
+      ✅ Upload CSV schedules<br>
+      ✅ Manage agents (add/edit)
+      {% elif user_role == 'supervisor' %}
+      ✅ View roster<br>
+      ✅ Edit schedules manually<br>
+      ❌ Upload CSV schedules<br>
+      ❌ Manage agents
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

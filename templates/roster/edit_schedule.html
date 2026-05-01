@@ -1,0 +1,130 @@
+{% extends 'roster/base.html' %}
+{% load roster_tags %}
+{% block title %}Edit Schedule{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Edit Schedule</div>
+    <div class="page-subtitle">{{ week_start|date:"M d" }} – {{ week_end|date:"M d, Y" }}</div>
+  </div>
+  <div class="week-nav">
+    <a href="?week_start={{ prev_week|date:'Y-m-d' }}">← Prev</a>
+    <span class="week-label">Week of {{ week_start|date:"M d, Y" }}</span>
+    <a href="?week_start={{ next_week|date:'Y-m-d' }}">Next →</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Add / Update Schedule Entry</span>
+  </div>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="form-grid-3">
+      <div class="form-group">
+        <label class="form-label">Agent</label>{{ form.agent }}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date</label>{{ form.date }}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>{{ form.status }}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Start Time (IST)</label>{{ form.shift_start_ist }}
+      </div>
+      <div class="form-group">
+        <label class="form-label">End Time (IST)</label>{{ form.shift_end_ist }}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Break (min)</label>{{ form.break_duration_minutes }}
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>{{ form.notes }}
+    </div>
+    <button type="submit" class="btn btn-primary">Save Entry</button>
+  </form>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden;">
+  <div class="card-header" style="padding:14px 20px;">
+    <span class="card-title">Current Week Roster</span>
+    <div class="tz-toggle">
+      <button class="tz-btn active" id="btn-ist" onclick="setTZ('IST')">IST</button>
+      <button class="tz-btn" id="btn-cst" onclick="setTZ('CST')">CST</button>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table class="roster-grid">
+      <thead>
+        <tr>
+          <th style="text-align:left;padding-left:12px;">Agent</th>
+          {% for d in week_dates %}
+          <th class="{% if d == today %}today-col{% endif %}">
+            <div>{{ d|date:"D" }}</div>
+            <div style="font-size:0.85rem;font-weight:600;color:var(--text-primary);">{{ d|date:"d" }}</div>
+          </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for agent in agents %}
+        <tr>
+          <td class="agent-cell">
+            <div class="agent-name">{{ agent.full_name }}</div>
+            <div class="agent-id">{{ agent.employee_id }}</div>
+          </td>
+          {% for d in week_dates %}
+          {% lookup_schedule schedule_map agent.id d|date:"Y-m-d" as sched %}
+          <td class="{% if d == today %}today-cell{% endif %}">
+            {% if sched %}
+            <div class="sched-cell">
+              {% if sched.shift_start_ist %}
+              <div class="sched-time ist-time"
+                   data-start="{{ sched.shift_start_ist|time:'H:i' }}"
+                   data-end="{{ sched.shift_end_ist|time:'H:i' }}">
+                {{ sched.shift_start_ist|time:"H:i" }}–{{ sched.shift_end_ist|time:"H:i" }}
+              </div>
+              {% endif %}
+              <span class="sched-status status-{{ sched.status }}">{{ sched.get_status_display }}</span>
+              <div style="margin-top:4px;">
+                <form method="post" action="{% url 'delete_schedule' sched.id %}" style="display:inline;" onsubmit="return confirm('Delete this entry?')">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-danger btn-sm" style="padding:2px 6px;font-size:0.65rem;">✕</button>
+                </form>
+              </div>
+            </div>
+            {% else %}
+            <div class="sched-empty">—</div>
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const OFFSET_MIN = 690;
+function setTZ(tz) {
+  document.getElementById('btn-ist').classList.toggle('active', tz === 'IST');
+  document.getElementById('btn-cst').classList.toggle('active', tz === 'CST');
+  document.querySelectorAll('.ist-time').forEach(el => {
+    const s = el.getAttribute('data-start'), e = el.getAttribute('data-end');
+    if (!s || !e) return;
+    el.textContent = tz === 'IST' ? (s+'–'+e) : (conv(s)+'–'+conv(e)+' CST');
+  });
+}
+function conv(t) {
+  const [h,m] = t.split(':').map(Number);
+  let tot = ((h*60+m-OFFSET_MIN)%1440+1440)%1440;
+  return String(Math.floor(tot/60)).padStart(2,'0')+':'+String(tot%60).padStart(2,'0');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Roster Manager{% endblock %}</title>
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/main.css' %}">
+</head>
+<body>
+
+{% if user.is_authenticated %}
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <h1>Roster Manager</h1>
+    <span>Workforce Management</span>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Navigation</div>
+    <a href="{% url 'roster' %}" class="nav-item {% if request.resolver_match.url_name == 'roster' %}active{% endif %}">
+      <span class="nav-icon">📋</span> Roster View
+    </a>
+
+    {% if user_role in 'wfm supervisor' %}
+    <div class="nav-section" style="margin-top:8px;">Management</div>
+    <a href="{% url 'dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+      <span class="nav-icon">📊</span> Dashboard
+    </a>
+    <a href="{% url 'edit_schedule' %}" class="nav-item {% if request.resolver_match.url_name == 'edit_schedule' %}active{% endif %}">
+      <span class="nav-icon">✏️</span> Edit Schedule
+    </a>
+    {% endif %}
+
+    {% if user_role == 'wfm' %}
+    <a href="{% url 'upload_schedule' %}" class="nav-item {% if request.resolver_match.url_name == 'upload_schedule' %}active{% endif %}">
+      <span class="nav-icon">⬆️</span> Upload CSV
+    </a>
+    <a href="{% url 'manage_agents' %}" class="nav-item {% if request.resolver_match.url_name == 'manage_agents' %}active{% endif %}">
+      <span class="nav-icon">👥</span> Manage Agents
+    </a>
+    {% endif %}
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <strong>{{ user.get_full_name|default:user.username }}</strong>
+      <span class="role-badge {{ user_role }}">{{ user_role|upper }}</span>
+    </div>
+    <a href="{% url 'logout' %}" class="btn btn-outline btn-sm" style="width:100%; justify-content:center;">
+      Sign Out
+    </a>
+  </div>
+</aside>
+{% endif %}
+
+<main class="main-content {% if not user.is_authenticated %}no-sidebar{% endif %}">
+  {% if messages %}
+  <div class="messages">
+    {% for msg in messages %}
+    <div class="alert alert-{{ msg.tags }}">{{ msg }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% block content %}{% endblock %}
+</main>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

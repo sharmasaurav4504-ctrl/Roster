@@ -1,0 +1,109 @@
+{% extends 'roster/base.html' %}
+{% load roster_tags %}
+{% block title %}Weekly Roster{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Weekly Roster</div>
+    <div class="page-subtitle">{{ week_start|date:"M d" }} – {{ week_end|date:"M d, Y" }}</div>
+  </div>
+  <div class="flex-center gap-3">
+    <div class="tz-toggle">
+      <button class="tz-btn active" id="btn-ist" onclick="setTZ('IST')">IST</button>
+      <button class="tz-btn" id="btn-cst" onclick="setTZ('CST')">CST</button>
+    </div>
+    <div class="week-nav">
+      <a href="?week_start={{ prev_week|date:'Y-m-d' }}">← Prev</a>
+      <span class="week-label">Week of {{ week_start|date:"M d, Y" }}</span>
+      <a href="?week_start={{ next_week|date:'Y-m-d' }}">Next →</a>
+    </div>
+    {% if not user.is_authenticated %}
+    <a href="{% url 'login' %}" class="btn btn-outline btn-sm">Login</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden;">
+  <div class="table-wrap">
+    <table class="roster-grid">
+      <thead>
+        <tr>
+          <th style="text-align:left;padding-left:12px;min-width:160px;">Agent</th>
+          {% for d in week_dates %}
+          <th class="{% if d == today %}today-col{% endif %}">
+            <div>{{ d|date:"D" }}</div>
+            <div style="font-size:0.85rem;font-weight:600;color:var(--text-primary);">{{ d|date:"d" }}</div>
+            <div>{{ d|date:"M" }}</div>
+          </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for agent in agents %}
+        <tr>
+          <td class="agent-cell">
+            <div class="agent-name">{{ agent.full_name }}</div>
+            <div class="agent-id">{{ agent.employee_id }}</div>
+            {% if agent.team %}<div class="agent-team">{{ agent.team }}</div>{% endif %}
+          </td>
+          {% for d in week_dates %}
+          {% lookup_schedule schedule_map agent.id d|date:"Y-m-d" as sched %}
+          <td class="{% if d == today %}today-cell{% endif %}">
+            {% if sched %}
+              <div class="sched-cell">
+                {% if sched.shift_start_ist and sched.shift_end_ist %}
+                  <div class="sched-time ist-time"
+                       data-start="{{ sched.shift_start_ist|time:'H:i' }}"
+                       data-end="{{ sched.shift_end_ist|time:'H:i' }}">
+                    {{ sched.shift_start_ist|time:"H:i" }} – {{ sched.shift_end_ist|time:"H:i" }}
+                  </div>
+                {% endif %}
+                <span class="sched-status status-{{ sched.status }}">{{ sched.get_status_display }}</span>
+                {% if sched.notes %}<div style="font-size:0.65rem;color:var(--text-muted);margin-top:2px;">{{ sched.notes|truncatechars:30 }}</div>{% endif %}
+              </div>
+            {% else %}
+              <div class="sched-empty">—</div>
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">No agents found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div style="font-size:0.72rem;color:var(--text-muted);margin-top:10px;display:flex;gap:14px;flex-wrap:wrap;align-items:center;">
+  <span style="color:var(--text-secondary);font-weight:500;">Legend:</span>
+  <span><span class="sched-status status-scheduled">Scheduled</span></span>
+  <span><span class="sched-status status-off">Day Off</span></span>
+  <span><span class="sched-status status-wfh">WFH</span></span>
+  <span><span class="sched-status status-leave">Leave</span></span>
+  <span><span class="sched-status status-training">Training</span></span>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const OFFSET_MIN = 690;
+function setTZ(tz) {
+  document.getElementById('btn-ist').classList.toggle('active', tz==='IST');
+  document.getElementById('btn-cst').classList.toggle('active', tz==='CST');
+  document.querySelectorAll('.ist-time').forEach(el => {
+    const s=el.getAttribute('data-start'), e=el.getAttribute('data-end');
+    if(!s||!e) return;
+    el.textContent = tz==='IST' ? (s+' – '+e) : (conv(s)+' – '+conv(e)+' CST');
+  });
+}
+function conv(t) {
+  const [h,m]=t.split(':').map(Number);
+  let tot=((h*60+m-OFFSET_MIN)%1440+1440)%1440;
+  return String(Math.floor(tot/60)).padStart(2,'0')+':'+String(tot%60).padStart(2,'0');
+}
+</script>
+{% endblock %}
